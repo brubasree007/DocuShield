@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account — DocuShield</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #05060f;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            color: #f1f5f9;
+        }
+
+        .sphere { position: fixed; border-radius: 50%; filter: blur(70px); pointer-events: none; z-index: 0; }
+        .s1 { top: -15%; right: -10%; width: 580px; height: 580px; background: radial-gradient(circle, rgba(139,92,246,0.22) 0%, transparent 65%); animation: p1 10s ease-in-out infinite alternate; }
+        .s2 { bottom: -15%; left: -10%; width: 520px; height: 520px; background: radial-gradient(circle, rgba(56,189,248,0.18) 0%, transparent 65%); animation: p2 12s ease-in-out infinite alternate; }
+        .s3 { top: 50%; left: 50%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(236,72,153,0.13) 0%, transparent 65%); animation: p3 8s ease-in-out infinite alternate; }
+
+        @keyframes p1 { from { transform: scale(1) translate(0,0); } to { transform: scale(1.1) translate(-40px, 30px); } }
+        @keyframes p2 { from { transform: scale(1) translate(0,0); } to { transform: scale(1.08) translate(30px, -35px); } }
+        @keyframes p3 { from { transform: scale(1); } to { transform: scale(1.2); } }
+
+        .grid-overlay {
+            position: fixed; inset: 0; z-index: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .page-wrap {
+            position: relative; z-index: 10;
+            display: flex; width: 100%; max-width: 980px;
+            margin: 24px; border-radius: 28px; overflow: hidden;
+            box-shadow: 0 50px 120px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.07);
+        }
+
+        /* ── Left Brand Panel ── */
+        .brand-panel {
+            width: 400px; flex-shrink: 0;
+            background: linear-gradient(145deg, #0d1a2e 0%, #13082a 50%, #030d20 100%);
+            padding: 48px 44px;
+            display: flex; flex-direction: column; justify-content: space-between;
+            position: relative; overflow: hidden;
+        }
+        .bp-glow1 { position: absolute; top: -60px; left: -60px; width: 260px; height: 260px; background: radial-gradient(circle, rgba(56,189,248,0.3) 0%, transparent 70%); border-radius: 50%; }
+        .bp-glow2 { position: absolute; bottom: -70px; right: -70px; width: 280px; height: 280px; background: radial-gradient(circle, rgba(168,85,247,0.3) 0%, transparent 70%); border-radius: 50%; }
+
+        .brand-logo { display: flex; align-items: center; gap: 14px; position: relative; z-index: 2; }
+        .logo-box {
+            width: 50px; height: 50px; border-radius: 15px;
+            background: linear-gradient(135deg, #0ea5e9, #6366f1, #a855f7);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; color: white;
+            box-shadow: 0 8px 28px rgba(99,102,241,0.5);
+        }
+        .bn { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; }
+        .bn span { color: #818cf8; }
+        .bt { font-size: 9.5px; color: #475569; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; margin-top: 1px; }
+
+        .brand-hero { position: relative; z-index: 2; }
+        .brand-headline { font-size: 30px; font-weight: 900; line-height: 1.18; letter-spacing: -1px; margin-bottom: 14px; }
+        .grad-text {
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .brand-desc { font-size: 12.5px; color: rgba(255,255,255,0.38); line-height: 1.75; }
+
+        /* Steps */
+        .steps { display: flex; flex-direction: column; gap: 14px; position: relative; z-index: 2; }
+        .step { display: flex; align-items: center; gap: 14px; }
+        .step-num {
+            width: 28px; height: 28px; border-radius: 8px;
+            background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.3);
+            color: #818cf8; font-size: 11px; font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .step-text { font-size: 12px; color: rgba(255,255,255,0.55); font-weight: 500; }
+
+        /* ── Right Form Panel ── */
+        .form-panel {
+            flex: 1;
+            background: rgba(8, 9, 22, 0.96);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            padding: 50px 48px;
+            display: flex; flex-direction: column; justify-content: center;
+            border-left: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .form-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: #818cf8; margin-bottom: 10px; display: flex; align-items: center; }
+        .form-title { font-size: 27px; font-weight: 900; letter-spacing: -0.6px; margin-bottom: 6px; }
+        .form-sub { font-size: 13px; color: #64748b; margin-bottom: 28px; }
+
+        /* Progress Steps (top of form) */
+        .step-indicator { display: flex; gap: 6px; margin-bottom: 28px; }
+        .si-dot { height: 4px; border-radius: 4px; flex: 1; background: rgba(255,255,255,0.07); }
+        .si-dot.active { background: linear-gradient(90deg, #6366f1, #a855f7); }
+
+        .err-box { display: none; gap: 10px; align-items: flex-start; padding: 13px 16px; border-radius: 13px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; font-size: 12.5px; font-weight: 500; margin-bottom: 20px; }
+        .err-box.show { display: flex; }
+
+        .fgroup { margin-bottom: 16px; }
+        .flabel { display: block; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px; }
+
+        .iw { position: relative; }
+        .iico { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #475569; font-size: 13px; transition: color 0.25s; pointer-events: none; }
+
+        .finput {
+            width: 100%;
+            background: rgba(255,255,255,0.03);
+            border: 1.5px solid rgba(255,255,255,0.08);
+            border-radius: 13px;
+            padding: 13px 16px 13px 44px;
+            font-size: 13.5px; color: #f1f5f9;
+            font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 500;
+            outline: none;
+            transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+        }
+        .finput::placeholder { color: rgba(255,255,255,0.14); font-weight: 400; }
+        .finput:focus {
+            border-color: #818cf8;
+            background: rgba(99,102,241,0.06);
+            box-shadow: 0 0 0 4px rgba(99,102,241,0.1);
+        }
+        .iw:focus-within .iico { color: #818cf8; }
+
+        /* Password strength indicator */
+        .pwd-strength { display: flex; gap: 4px; margin-top: 8px; }
+        .ps-bar { height: 3px; flex: 1; border-radius: 3px; background: rgba(255,255,255,0.07); transition: background 0.3s; }
+
+        .btn-main {
+            width: 100%; padding: 14.5px; border-radius: 13px; border: none;
+            background: linear-gradient(135deg, #4f46e5 0%, #818cf8 55%, #a855f7 100%);
+            color: white;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 14px; font-weight: 800;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 9px;
+            box-shadow: 0 10px 35px rgba(99,102,241,0.45);
+            transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+            letter-spacing: 0.2px; margin-top: 6px;
+        }
+        .btn-main:hover { opacity: 0.92; transform: translateY(-2px); box-shadow: 0 14px 40px rgba(99,102,241,0.55); }
+        .btn-main:active { transform: translateY(0); }
+        .btn-main:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+        .terms-note { font-size: 11px; color: #475569; text-align: center; margin-top: 14px; line-height: 1.5; }
+        .terms-note a { color: #818cf8; text-decoration: none; }
+        .terms-note a:hover { text-decoration: underline; }
+
+        .form-footer { text-align: center; margin-top: 22px; font-size: 13px; color: #475569; }
+        .form-footer a { color: #818cf8; font-weight: 700; text-decoration: none; }
+        .form-footer a:hover { color: #a5b4fc; text-decoration: underline; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { animation: spin 0.75s linear infinite; display: inline-block; }
+
+        /* Success overlay */
+        .success-overlay {
+            display: none;
+            position: absolute; inset: 0;
+            background: rgba(8,9,22,0.95);
+            flex-direction: column; align-items: center; justify-content: center;
+            gap: 16px; z-index: 50;
+        }
+        .success-overlay.show { display: flex; }
+        .success-ring {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: rgba(16,185,129,0.15);
+            border: 2px solid rgba(16,185,129,0.4);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; color: #10b981;
+            animation: pop 0.4s ease;
+        }
+        @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        @media (max-width: 720px) {
+            .brand-panel { display: none; }
+            .page-wrap { max-width: 460px; border-radius: 22px; }
+            .form-panel { padding: 40px 28px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sphere s1"></div>
+    <div class="sphere s2"></div>
+    <div class="sphere s3"></div>
+    <div class="grid-overlay"></div>
+
+    <div class="page-wrap">
+
+        <!-- Left Brand Panel -->
+        <div class="brand-panel">
+            <div class="bp-glow1"></div>
+            <div class="bp-glow2"></div>
+
+            <div class="brand-logo">
+                <div class="logo-box"><i class="fa-solid fa-shield-halved"></i></div>
+                <div>
+                    <div class="bn">Docu<span>Shield</span></div>
+                    <div class="bt">Forensic Verification</div>
+                </div>
+            </div>
+
+            <div class="brand-hero">
+                <h2 class="brand-headline">Start Verifying<br>with <span class="grad-text">AI Power</span></h2>
+                <p class="brand-desc">Join professionals from Banks, HR teams, Legal firms, and Government agencies using DocuShield.</p>
+            </div>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <span class="step-text">Create your free account</span>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <span class="step-text">Upload a document to verify</span>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <span class="step-text">Get an instant AI forensic report</span>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <span class="step-text">Export & share PDF audit report</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Form Panel -->
+        <div class="form-panel" style="position:relative;">
+
+            <!-- Success overlay -->
+            <div class="success-overlay" id="successOverlay">
+                <div class="success-ring"><i class="fa-solid fa-check"></i></div>
+                <div style="text-align:center;">
+                    <p style="font-size:18px;font-weight:800;color:#f1f5f9;">Account Created!</p>
+                    <p style="font-size:13px;color:#64748b;margin-top:4px;">Redirecting to your dashboard...</p>
+                </div>
+            </div>
+
+            <div class="form-eyebrow">
+                <span style="display:inline-block;width:20px;height:2px;background:#818cf8;margin-right:8px;border-radius:2px;vertical-align:middle;"></span>
+                New Account
+            </div>
+            <h1 class="form-title">Create your account ✨</h1>
+            <p class="form-sub">Join DocuShield and start detecting document forgery</p>
+
+            <div class="err-box" id="errBox">
+                <i class="fa-solid fa-circle-exclamation" style="flex-shrink:0;margin-top:1px;"></i>
+                <span id="errText">Something went wrong.</span>
+            </div>
+
+            <form id="signupForm" onsubmit="handleSignup(event)" novalidate>
+                <div class="fgroup">
+                    <label class="flabel" for="username">Full Name</label>
+                    <div class="iw">
+                        <input type="text" id="username" class="finput" placeholder="John Doe" required autocomplete="name">
+                        <i class="fa-solid fa-user iico"></i>
+                    </div>
+                </div>
+
+                <div class="fgroup">
+                    <label class="flabel" for="email">Work Email</label>
+                    <div class="iw">
+                        <input type="email" id="email" class="finput" placeholder="you@company.com" required autocomplete="email">
+                        <i class="fa-solid fa-envelope iico"></i>
+                    </div>
+                </div>
+
+                <div class="fgroup">
+                    <label class="flabel" for="password">Password</label>
+                    <div class="iw">
+                        <input type="password" id="password" class="finput" placeholder="Min. 6 characters" required minlength="6" autocomplete="new-password" oninput="checkStrength(this.value)">
+                        <i class="fa-solid fa-lock iico"></i>
+                    </div>
+                    <div class="pwd-strength" id="pwdBars">
+                        <div class="ps-bar" id="b1"></div>
+                        <div class="ps-bar" id="b2"></div>
+                        <div class="ps-bar" id="b3"></div>
+                        <div class="ps-bar" id="b4"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-main" id="btnSubmit">
+                    <span id="btnLabel">Create My Account</span>
+                    <i class="fa-solid fa-arrow-right" id="btnIco"></i>
+                </button>
+            </form>
+
+            <p class="form-footer">Already have an account? <a href="login.html">Sign in →</a></p>
+        </div>
+    </div>
+
+    <script>
+        let auth;
+        async function initFirebase() {
+            try {
+                const res = await fetch('/firebase-config');
+                const cfg = await res.json();
+                if (!firebase.apps.length) firebase.initializeApp(cfg);
+            } catch(e) { console.error(e); }
+            auth = firebase.auth();
+        }
+        initFirebase();
+
+        function checkStrength(val) {
+            const bars = [document.getElementById('b1'), document.getElementById('b2'), document.getElementById('b3'), document.getElementById('b4')];
+            bars.forEach(b => b.style.background = 'rgba(255,255,255,0.07)');
+
+            let score = 0;
+            if (val.length >= 6) score++;
+            if (val.length >= 10) score++;
+            if (/[A-Z]/.test(val) && /[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+
+            const colors = ['#ef4444', '#f59e0b', '#10b981', '#22c55e'];
+            for (let i = 0; i < score; i++) {
+                bars[i].style.background = colors[Math.min(score - 1, colors.length - 1)];
+            }
+        }
+
+        function showErr(msg) {
+            document.getElementById('errText').textContent = msg;
+            document.getElementById('errBox').classList.add('show');
+        }
+
+        async function handleSignup(e) {
+            e.preventDefault();
+            document.getElementById('errBox').classList.remove('show');
+            const name = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const pwd = document.getElementById('password').value;
+            const btn = document.getElementById('btnSubmit');
+            const lbl = document.getElementById('btnLabel');
+            const ico = document.getElementById('btnIco');
+
+            btn.disabled = true;
+            lbl.textContent = 'Creating account...';
+            ico.className = 'fa-solid fa-circle-notch spin';
+
+            try {
+                const cred = await auth.createUserWithEmailAndPassword(email, pwd);
+                await cred.user.updateProfile({ displayName: name });
+
+                const res = await fetch('/signup', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ uid: cred.user.uid, email, username: name })
+                });
+
+                if (res.ok) {
+                    document.getElementById('successOverlay').classList.add('show');
+                    setTimeout(() => window.location.href = 'dashboard.html', 1600);
+                } else {
+                    const d = await res.json();
+                    throw new Error(d.message);
+                }
+            } catch(err) {
+                const code = err.code || '';
+                const msg = code.includes('email-already-in-use') ? 'This email is already registered. Please sign in.'
+                    : code.includes('invalid-email') ? 'Please enter a valid email address.'
+                    : code.includes('weak-password') ? 'Password must be at least 6 characters.'
+                    : err.message || 'Registration failed.';
+                showErr(msg);
+                btn.disabled = false;
+                lbl.textContent = 'Create My Account';
+                ico.className = 'fa-solid fa-arrow-right';
+            }
+        }
+    </script>
+</body>
+</html>

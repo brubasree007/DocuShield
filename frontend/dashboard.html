@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuShield — Verification Console & Analytics Dashboard</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f5f3ff',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            900: '#0b0d1b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0b0d1b;
+            color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .glass-card-hover:hover {
+            border-color: rgba(168, 85, 247, 0.4);
+            box-shadow: 0 15px 40px rgba(168, 85, 247, 0.15);
+        }
+
+        .glass-nav {
+            background: rgba(11, 13, 27, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            transition: background 0.25s ease, border-color 0.25s ease;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #38bdf8 0%, #a855f7 50%, #f43f5e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Progress ring animations */
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.8s ease-in-out;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* Drag & Drop Highlight */
+        .drag-over {
+            border-color: #a855f7 !important;
+            background: rgba(168, 85, 247, 0.08) !important;
+        }
+
+        /* ─── LIGHT MODE ADAPTATION ─── */
+        html:not(.dark) body {
+            background-color: #f1f5f9;
+            color: #1e293b;
+        }
+
+        html:not(.dark) .glass-nav {
+            background: rgba(255, 255, 255, 0.88);
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        html:not(.dark) .glass-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+        }
+
+        html:not(.dark) .text-white {
+            color: #0f172a !important;
+        }
+
+        html:not(.dark) .text-slate-300,
+        html:not(.dark) .text-slate-400 {
+            color: #64748b !important;
+        }
+
+        html:not(.dark) .text-slate-500 {
+            color: #94a3b8 !important;
+        }
+
+        html:not(.dark) .bg-slate-900,
+        html:not(.dark) .bg-slate-900\/40,
+        html:not(.dark) .bg-slate-900\/50,
+        html:not(.dark) .bg-slate-900\/60 {
+            background-color: #f8fafc !important;
+            border-color: #e2e8f0 !important;
+        }
+
+        html:not(.dark) .bg-slate-950 {
+            background-color: #f1f5f9 !important;
+            border-color: #e2e8f0 !important;
+        }
+
+        html:not(.dark) .bg-slate-800 {
+            background-color: #e2e8f0 !important;
+        }
+
+        html:not(.dark) .border-slate-800,
+        html:not(.dark) .border-slate-700 {
+            border-color: #e2e8f0 !important;
+        }
+
+        html:not(.dark) #dropZone {
+            background-color: #f8fafc !important;
+            border-color: #cbd5e1 !important;
+        }
+
+        html:not(.dark) #dropZone:hover {
+            border-color: #a855f7 !important;
+            background-color: #faf5ff !important;
+        }
+
+        html:not(.dark) input,
+        html:not(.dark) select {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+
+        html:not(.dark) input::placeholder {
+            color: #94a3b8 !important;
+        }
+
+        html:not(.dark) thead {
+            background-color: #f8fafc !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+
+        html:not(.dark) thead th {
+            color: #475569 !important;
+        }
+
+        html:not(.dark) tbody.divide-slate-800\/60 > * + * {
+            border-color: #f1f5f9 !important;
+        }
+
+        html:not(.dark) #historyTableBody tr:hover {
+            background-color: #f8fafc !important;
+        }
+
+        html:not(.dark) .border-l.border-slate-800 {
+            border-color: #e2e8f0 !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-16">
+
+    <!-- Top Navigation Bar -->
+    <nav class="sticky top-0 z-50 glass-nav px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <!-- Brand Logo -->
+            <a href="/" class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                    <span class="text-xl font-extrabold tracking-tight text-white">Docu<span class="text-purple-400">Shield</span></span>
+                    <span class="block text-[9px] tracking-widest text-slate-400 font-semibold uppercase">Forensic Console</span>
+                </div>
+            </a>
+
+            <!-- Right Controls & User Info -->
+            <div class="flex items-center gap-5">
+                <button onclick="toggleTheme()" class="w-9 h-9 rounded-lg glass-card flex items-center justify-center text-slate-300 hover:text-white transition-colors" title="Toggle Theme">
+                    <i class="fa-solid fa-moon text-sm" id="themeToggleIcon"></i>
+                </button>
+
+                <div class="flex items-center gap-3 pl-4 border-l border-slate-800">
+                    <div class="w-9 h-9 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 font-bold flex items-center justify-center text-sm" id="userInitial">
+                        U
+                    </div>
+                    <div class="hidden sm:block text-left">
+                        <span class="block text-xs font-bold text-white" id="userName">Active User</span>
+                        <span class="block text-[10px] text-emerald-400 font-semibold">● Session Verified</span>
+                    </div>
+                </div>
+
+                <button onclick="logoutUser()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-rose-300 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 transition-all">
+                    <i class="fa-solid fa-arrow-right-from-bracket mr-1"></i> Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard Container -->
+    <main class="max-w-7xl mx-auto px-6 pt-8 space-y-8">
+
+        <!-- Header Welcome -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Document Verification Hub</h1>
+                <p class="text-xs sm:text-sm text-slate-400">Real-time Error Level Analysis (ELA), EXIF Metadata Inspection & AI Audit Engine</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="scrollToUpload()" class="px-4 py-2.5 rounded-xl text-xs font-bold text-white gradient-bg shadow-lg hover:opacity-90 transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>Verify New Document</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 1. Stats Grid Overview -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <!-- Total Verified -->
+            <div class="p-5 rounded-2xl glass-card space-y-2">
+                <div class="flex items-center justify-between text-slate-400">
+                    <span class="text-xs font-semibold uppercase tracking-wider">Total Scanned</span>
+                    <i class="fa-solid fa-file-invoice text-purple-400 text-lg"></i>
+                </div>
+                <div class="text-3xl font-extrabold text-white" id="statTotal">0</div>
+                <span class="text-[11px] text-slate-400">All uploaded documents</span>
+            </div>
+
+            <!-- Genuine Documents -->
+            <div class="p-5 rounded-2xl glass-card space-y-2">
+                <div class="flex items-center justify-between text-slate-400">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Genuine</span>
+                    <i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+                </div>
+                <div class="text-3xl font-extrabold text-emerald-400" id="statGenuine">0</div>
+                <span class="text-[11px] text-emerald-300">Authentic & Verified</span>
+            </div>
+
+            <!-- Suspicious Documents -->
+            <div class="p-5 rounded-2xl glass-card space-y-2">
+                <div class="flex items-center justify-between text-slate-400">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-amber-400">Suspicious</span>
+                    <i class="fa-solid fa-triangle-exclamation text-amber-400 text-lg"></i>
+                </div>
+                <div class="text-3xl font-extrabold text-amber-400" id="statSuspicious">0</div>
+                <span class="text-[11px] text-amber-300">Minor anomalies flagged</span>
+            </div>
+
+            <!-- Forged Documents -->
+            <div class="p-5 rounded-2xl glass-card space-y-2">
+                <div class="flex items-center justify-between text-slate-400">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-rose-400">Forged</span>
+                    <i class="fa-solid fa-shield-virus text-rose-400 text-lg"></i>
+                </div>
+                <div class="text-3xl font-extrabold text-rose-400" id="statForged">0</div>
+                <span class="text-[11px] text-rose-300">High risk tamper detected</span>
+            </div>
+        </div>
+
+        <!-- 2. Document Upload & Live Pipeline Box -->
+        <section id="uploadSection" class="p-8 rounded-3xl glass-card border border-purple-500/20 space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-upload"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-white">Upload Document for Analysis</h2>
+                        <p class="text-xs text-slate-400">Supports PDF, JPG, JPEG, and PNG (Max 15MB)</p>
+                    </div>
+                </div>
+                <span class="text-xs font-mono text-purple-300 bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/20">
+                    Computer Vision Active
+                </span>
+            </div>
+
+            <!-- Drop Zone Area -->
+            <div id="dropZone" onclick="document.getElementById('fileInput').click()" 
+                 class="border-2 border-dashed border-slate-700 hover:border-purple-500/60 rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 bg-slate-900/40 space-y-4">
+                <input type="file" id="fileInput" class="hidden" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileSelect(event)">
+                
+                <div class="w-16 h-16 rounded-2xl bg-purple-500/10 text-purple-400 mx-auto flex items-center justify-center text-3xl">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+
+                <div>
+                    <span class="text-base font-bold text-white block">Drag and drop document here, or <span class="text-purple-400 underline">browse</span></span>
+                    <span class="text-xs text-slate-400 block mt-1">Automatic ELA heatmap scan and AI forensic audit</span>
+                </div>
+            </div>
+
+            <!-- Selected File Card Preview (Hidden by default) -->
+            <div id="filePreviewCard" class="hidden p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-lg bg-purple-500/20 text-purple-300 flex items-center justify-center text-lg" id="fileTypeIcon">
+                        <i class="fa-solid fa-file-pdf"></i>
+                    </div>
+                    <div>
+                        <span class="text-sm font-bold text-white block" id="previewFileName">document.pdf</span>
+                        <span class="text-xs text-slate-400" id="previewFileSize">2.4 MB</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="startAnalysisPipeline()" id="btnStartScan" class="px-5 py-2 rounded-xl text-xs font-bold text-white gradient-bg shadow-lg hover:opacity-90 transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Start AI Verification</span>
+                    </button>
+                    <button onclick="cancelFileSelection()" class="text-xs text-slate-400 hover:text-rose-400 px-2 py-1">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+
+            <!-- Multi-Stage Progress Bar (Hidden by default) -->
+            <div id="progressContainer" class="hidden space-y-4 pt-2">
+                <div class="flex items-center justify-between text-xs font-semibold">
+                    <span class="text-purple-300 flex items-center gap-2" id="progressStatusText">
+                        <i class="fa-solid fa-circle-notch animate-spin"></i> Step 1: Preprocessing & Resolution Normalization...
+                    </span>
+                    <span class="text-slate-400 font-mono" id="progressPercent">20%</span>
+                </div>
+                <div class="w-full h-2.5 rounded-full bg-slate-800 overflow-hidden">
+                    <div id="progressBar" class="h-full gradient-bg transition-all duration-500" style="width: 20%"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Verification Result & Side-by-Side Comparison Section (Hidden until scan finishes) -->
+        <section id="resultSection" class="hidden p-8 rounded-3xl glass-card border border-purple-500/30 space-y-8">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                    <span class="text-xs font-mono text-purple-300 uppercase tracking-widest" id="resultReportNo">REPORT ID: DS-10001</span>
+                    <h2 class="text-2xl font-extrabold text-white mt-1" id="resultFilename">Document Audit Summary</h2>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="px-4 py-1.5 rounded-full text-xs font-extrabold uppercase border" id="resultBadge">
+                        Genuine
+                    </span>
+                    <a id="btnDownloadPDF" href="#" target="_blank" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center gap-2 transition-all">
+                        <i class="fa-solid fa-file-pdf text-rose-400"></i> Download PDF Report
+                    </a>
+                </div>
+            </div>
+
+            <!-- Score Gauge & Sub-Scores Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+                <!-- Circular Authenticity Ring Gauge -->
+                <div class="flex flex-col items-center justify-center p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+                    <span class="text-xs text-slate-400 uppercase font-semibold">Authenticity Score</span>
+                    
+                    <div class="relative w-40 h-40 flex items-center justify-center">
+                        <svg class="w-full h-full" viewBox="0 0 100 100">
+                            <!-- Background track circle -->
+                            <circle cx="50" cy="50" r="42" stroke="#1e293b" stroke-width="8" fill="transparent" />
+                            <!-- Animated score circle -->
+                            <circle id="scoreRingCircle" class="progress-ring-circle" cx="50" cy="50" r="42" 
+                                    stroke="#10b981" stroke-width="8" fill="transparent"
+                                    stroke-dasharray="263.89" stroke-dashoffset="50" stroke-linecap="round" />
+                        </svg>
+                        <div class="absolute text-center">
+                            <span class="text-4xl font-extrabold text-white" id="scoreText">88</span>
+                            <span class="block text-[10px] text-slate-400 font-semibold">OUT OF 100</span>
+                        </div>
+                    </div>
+
+                    <span class="text-xs font-extrabold uppercase tracking-wide text-emerald-400" id="riskLevelText">LOW RISK</span>
+                </div>
+
+                <!-- 5 Sub-Score Matrix (Middle & Right columns) -->
+                <div class="md:col-span-2 space-y-4">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Sub-Score Metric Breakdown</h4>
+                    
+                    <div class="space-y-3 text-xs">
+                        <div>
+                            <div class="flex justify-between font-semibold mb-1">
+                                <span class="text-slate-300">1. Image Quality & Resolution</span>
+                                <span class="text-purple-400 font-mono" id="subScoreQuality">18 / 20</span>
+                            </div>
+                            <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                                <div class="h-full bg-purple-500" id="barQuality" style="width: 90%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between font-semibold mb-1">
+                                <span class="text-slate-300">2. PDF EXIF Metadata Integrity</span>
+                                <span class="text-cyan-400 font-mono" id="subScoreMeta">20 / 20</span>
+                            </div>
+                            <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                                <div class="h-full bg-cyan-400" id="barMeta" style="width: 100%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between font-semibold mb-1">
+                                <span class="text-slate-300">3. OCR Text Extraction Confidence</span>
+                                <span class="text-emerald-400 font-mono" id="subScoreOCR">16 / 20</span>
+                            </div>
+                            <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                                <div class="h-full bg-emerald-400" id="barOCR" style="width: 80%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between font-semibold mb-1">
+                                <span class="text-slate-300">4. Computer Vision ELA Forgery Scan</span>
+                                <span class="text-amber-400 font-mono" id="subScoreELA">17 / 20</span>
+                            </div>
+                            <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                                <div class="h-full bg-amber-400" id="barELA" style="width: 85%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between font-semibold mb-1">
+                                <span class="text-slate-300">5. Groq Llama 3.3 AI Audit</span>
+                                <span class="text-rose-400 font-mono" id="subScoreAI">17 / 20</span>
+                            </div>
+                            <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                                <div class="h-full bg-rose-400" id="barAI" style="width: 85%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Side-by-Side Visual Comparison View -->
+            <div class="space-y-4 pt-4 border-t border-slate-800">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-[#a855f7] fa-eye text-purple-400"></i> Side-by-Side Visual Inspection: Original vs ELA Compression Heatmap
+                    </h3>
+                    <span class="text-xs text-slate-400">Computer Vision Pixel Delta Scan</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Original Preview Card -->
+                    <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Original Document View</span>
+                        <div class="h-72 rounded-xl bg-slate-950 flex items-center justify-center overflow-hidden border border-slate-800">
+                            <img id="imgOriginalPreview" src="" alt="Original Document" class="max-h-full max-w-full object-contain">
+                        </div>
+                    </div>
+
+                    <!-- ELA Heatmap Card -->
+                    <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-purple-400 block">Error Level Analysis (ELA) Heatmap</span>
+                        <div class="h-72 rounded-xl bg-slate-950 flex items-center justify-center overflow-hidden border border-slate-800 relative">
+                            <img id="imgELAHeatmap" src="" alt="ELA Heatmap" class="max-h-full max-w-full object-contain">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Explainable AI Insights Box -->
+            <div class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-2">
+                    <i class="fa-solid fa-lightbulb"></i> Explainable AI Decision Reasoning
+                </h4>
+                <ul class="space-y-2 text-xs text-slate-300" id="explainableList">
+                    <!-- Dynamic insights loaded here -->
+                </ul>
+            </div>
+        </section>
+
+        <!-- 4. Interactive Analytics Dashboard (Chart.js) -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Line Chart: Verification Volume Trends -->
+            <div class="lg:col-span-2 p-6 rounded-3xl glass-card space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-white">Daily Verification Trends</h3>
+                        <p class="text-xs text-slate-400">Total documents processed over recent days</p>
+                    </div>
+                    <span class="text-xs font-semibold text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/20">
+                        Live Analytics
+                    </span>
+                </div>
+                <div class="h-64">
+                    <canvas id="chartTrends"></canvas>
+                </div>
+            </div>
+
+            <!-- Doughnut Chart: Verdict Distribution -->
+            <div class="p-6 rounded-3xl glass-card space-y-4">
+                <div>
+                    <h3 class="text-base font-bold text-white">Verdict Distribution</h3>
+                    <p class="text-xs text-slate-400">Genuine vs Suspicious vs Forged ratio</p>
+                </div>
+                <div class="h-64 flex items-center justify-center">
+                    <canvas id="chartDistribution"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Searchable Verification History Table -->
+        <section class="p-6 rounded-3xl glass-card space-y-6">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-lg font-extrabold text-white">Verification History Audit Log</h3>
+                    <p class="text-xs text-slate-400">All previous forensic scans and exported reports</p>
+                </div>
+
+                <!-- Search & Filter Controls -->
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <div class="relative flex-1 md:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+                        <input type="text" id="searchInput" oninput="filterHistory()" placeholder="Search Report ID or filename..." 
+                               class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500">
+                    </div>
+
+                    <select id="filterStatus" onchange="filterHistory()" 
+                            class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-purple-500">
+                        <option value="ALL">All Statuses</option>
+                        <option value="Genuine">Genuine</option>
+                        <option value="Suspicious">Suspicious</option>
+                        <option value="Forged">Forged</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- History Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-900/60 uppercase font-semibold text-slate-400 border-b border-slate-800">
+                        <tr>
+                            <th class="p-3.5">Report ID</th>
+                            <th class="p-3.5">Filename</th>
+                            <th class="p-3.5">Authenticity Index</th>
+                            <th class="p-3.5">Verdict</th>
+                            <th class="p-3.5">Date</th>
+                            <th class="p-3.5 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody" class="divide-y divide-slate-800/60">
+                        <!-- Rows rendered dynamically -->
+                        <tr>
+                            <td colspan="6" class="p-8 text-center text-slate-500">
+                                Loading verification records...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- App JavaScript Logic -->
+    <script>
+        let selectedFile = null;
+        let allHistoryRecords = [];
+        let trendChart = null;
+        let distChart = null;
+
+        // Initialize user & analytics on load
+        window.addEventListener('DOMContentLoaded', () => {
+            checkActiveUser();
+            loadHistoryAndAnalytics();
+        });
+
+        async function checkActiveUser() {
+            try {
+                const res = await fetch('/active-user');
+                const data = await res.json();
+                if (data.logged_in) {
+                    document.getElementById('userName').textContent = data.username;
+                    document.getElementById('userInitial').textContent = data.username.charAt(0).toUpperCase();
+                } else {
+                    window.location.href = 'login.html';
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function logoutUser() {
+            await fetch('/logout', { method: 'POST' });
+            window.location.href = 'login.html';
+        }
+
+        function scrollToUpload() {
+            document.getElementById('uploadSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // File Drag & Drop handlers
+        const dropZone = document.getElementById('dropZone');
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); }, false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); }, false);
+        });
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files && files.length > 0) {
+                handleFileSelect({ target: { files: files } });
+            }
+        });
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            
+            selectedFile = files[0];
+            document.getElementById('previewFileName').textContent = selectedFile.name;
+            document.getElementById('previewFileSize').textContent = (selectedFile.size / (1024 * 1024)).toFixed(2) + ' MB';
+            
+            document.getElementById('dropZone').classList.add('hidden');
+            document.getElementById('filePreviewCard').classList.remove('hidden');
+        }
+
+        function cancelFileSelection() {
+            selectedFile = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('filePreviewCard').classList.add('hidden');
+            document.getElementById('dropZone').classList.remove('hidden');
+            document.getElementById('progressContainer').classList.add('hidden');
+        }
+
+        // Start AI Pipeline Execution
+        async function startAnalysisPipeline() {
+            if (!selectedFile) return;
+
+            const btn = document.getElementById('btnStartScan');
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+
+            const progressContainer = document.getElementById('progressContainer');
+            const progressStatusText = document.getElementById('progressStatusText');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressBar = document.getElementById('progressBar');
+
+            progressContainer.classList.remove('hidden');
+
+            // Animated step progress simulation
+            const steps = [
+                { pct: '20%', text: 'Step 1: Resolution Normalization & File Ingestion...' },
+                { pct: '45%', text: 'Step 2: Computing Error Level Analysis (ELA) Compression Heatmap...' },
+                { pct: '70%', text: 'Step 3: Extracting Text Fields & EXIF Metadata Signatures...' },
+                { pct: '90%', text: 'Step 4: Executing Groq Llama 3.3 Logical AI Audit...' },
+            ];
+
+            let stepIdx = 0;
+            const interval = setInterval(() => {
+                if (stepIdx < steps.length) {
+                    progressBar.style.width = steps[stepIdx].pct;
+                    progressPercent.textContent = steps[stepIdx].pct;
+                    progressStatusText.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i> ${steps[stepIdx].text}`;
+                    stepIdx++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 500);
+
+            try {
+                // 1. Upload File
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                const uploadRes = await fetch('/upload', { method: 'POST', body: formData });
+                const uploadData = await uploadRes.json();
+
+                if (!uploadRes.ok) throw new Error(uploadData.message || 'Upload failed');
+
+                // 2. Run Verification
+                const verifyRes = await fetch('/verify', { method: 'POST' });
+                const verifyData = await verifyRes.json();
+
+                if (!verifyRes.ok) throw new Error(verifyData.message || 'Verification failed');
+
+                progressBar.style.width = '100%';
+                progressPercent.textContent = '100%';
+                progressStatusText.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> Verification Complete!`;
+
+                setTimeout(() => {
+                    displayVerificationResults(verifyData);
+                    loadHistoryAndAnalytics();
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50');
+                }, 600);
+
+            } catch (err) {
+                alert(err.message || 'An error occurred during verification.');
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+            }
+        }
+
+        // Render Results Card
+        function displayVerificationResults(data) {
+            const resultSection = document.getElementById('resultSection');
+            resultSection.classList.remove('hidden');
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+
+            document.getElementById('resultReportNo').textContent = `REPORT ID: ${data.report_id}`;
+            document.getElementById('resultFilename').textContent = data.filename;
+
+            // Score ring update
+            const score = data.score;
+            document.getElementById('scoreText').textContent = score;
+
+            const circle = document.getElementById('scoreRingCircle');
+            const circumference = 2 * Math.PI * 42; // r=42
+            const offset = circumference - (score / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+
+            const badge = document.getElementById('resultBadge');
+            const riskText = document.getElementById('riskLevelText');
+
+            if (score >= 80) {
+                badge.className = "px-4 py-1.5 rounded-full text-xs font-extrabold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+                badge.textContent = "GENUINE";
+                riskText.className = "text-xs font-extrabold uppercase tracking-wide text-emerald-400";
+                riskText.textContent = "LOW RISK DOCUMENT";
+                circle.style.stroke = "#10b981";
+            } else if (score >= 55) {
+                badge.className = "px-4 py-1.5 rounded-full text-xs font-extrabold uppercase bg-amber-500/10 text-amber-400 border border-amber-500/30";
+                badge.textContent = "SUSPICIOUS";
+                riskText.className = "text-xs font-extrabold uppercase tracking-wide text-amber-400";
+                riskText.textContent = "MEDIUM RISK ANOMALY";
+                circle.style.stroke = "#f59e0b";
+            } else {
+                badge.className = "px-4 py-1.5 rounded-full text-xs font-extrabold uppercase bg-rose-500/10 text-rose-400 border border-rose-500/30";
+                badge.textContent = "FORGED";
+                riskText.className = "text-xs font-extrabold uppercase tracking-wide text-rose-400";
+                riskText.textContent = "HIGH RISK FORGERY";
+                circle.style.stroke = "#ef4444";
+            }
+
+            document.getElementById('btnDownloadPDF').href = `/generate-report/${data.id}`;
+
+            // Sub-scores
+            const subs = data.sub_scores || {};
+            document.getElementById('subScoreQuality').textContent = `${subs.image_quality || 16} / 20`;
+            document.getElementById('barQuality').style.width = `${((subs.image_quality || 16)/20)*100}%`;
+
+            document.getElementById('subScoreMeta').textContent = `${subs.metadata_integrity || 18} / 20`;
+            document.getElementById('barMeta').style.width = `${((subs.metadata_integrity || 18)/20)*100}%`;
+
+            document.getElementById('subScoreOCR').textContent = `${subs.ocr_confidence || 15} / 20`;
+            document.getElementById('barOCR').style.width = `${((subs.ocr_confidence || 15)/20)*100}%`;
+
+            document.getElementById('subScoreELA').textContent = `${subs.cv_forgery_detection || 17} / 20`;
+            document.getElementById('barELA').style.width = `${((subs.cv_forgery_detection || 17)/20)*100}%`;
+
+            document.getElementById('subScoreAI').textContent = `${subs.ai_classification || 18} / 20`;
+            document.getElementById('barAI').style.width = `${((subs.ai_classification || 18)/20)*100}%`;
+
+            // Images
+            const extData = data.extracted_data || {};
+            document.getElementById('imgOriginalPreview').src = extData.preview_url || '#';
+            document.getElementById('imgELAHeatmap').src = extData.ela_url || '#';
+
+            // Explainable insights
+            const explainList = document.getElementById('explainableList');
+            explainList.innerHTML = '';
+            (data.explainable_insights || []).forEach(ins => {
+                const li = document.createElement('li');
+                li.className = "flex items-start gap-2";
+                li.innerHTML = `<i class="fa-solid fa-circle-check text-purple-400 text-[10px] mt-1"></i> <span>${ins}</span>`;
+                explainList.appendChild(li);
+            });
+        }
+
+        // Fetch History & Analytics
+        async function loadHistoryAndAnalytics() {
+            try {
+                const [histRes, anaRes] = await Promise.all([
+                    fetch('/history'),
+                    fetch('/analytics')
+                ]);
+
+                if (histRes.ok) {
+                    allHistoryRecords = await histRes.json();
+                    renderHistoryTable(allHistoryRecords);
+                }
+
+                if (anaRes.ok) {
+                    const ana = await anaRes.json();
+                    document.getElementById('statTotal').textContent = ana.total_documents;
+                    document.getElementById('statGenuine').textContent = ana.genuine_count;
+                    document.getElementById('statSuspicious').textContent = ana.suspicious_count;
+                    document.getElementById('statForged').textContent = ana.forged_count;
+
+                    renderCharts(ana);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Render History Table
+        function renderHistoryTable(records) {
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = '';
+
+            if (!records || records.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-500">No documents verified yet. Upload your first document above.</td></tr>`;
+                return;
+            }
+
+            records.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-900/40 transition-colors";
+
+                const score = r.confidence_score || 80;
+                let badgeClass = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+                if (r.verdict === 'Suspicious' || (score >= 55 && score < 80)) badgeClass = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+                if (r.verdict === 'Forged' || score < 55) badgeClass = "bg-rose-500/10 text-rose-400 border-rose-500/20";
+
+                tr.innerHTML = `
+                    <td class="p-3.5 font-mono text-purple-300 font-semibold">${r.report_id || 'DS-1000'}</td>
+                    <td class="p-3.5 font-medium text-white max-w-[180px] truncate" title="${r.filename}">${r.filename}</td>
+                    <td class="p-3.5 font-bold text-white">${score} / 100</td>
+                    <td class="p-3.5">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${badgeClass}">
+                            ${(r.verdict || 'Genuine').toUpperCase()}
+                        </span>
+                    </td>
+                    <td class="p-3.5 text-slate-400">${r.date_str || 'Recently'}</td>
+                    <td class="p-3.5 text-right">
+                        <a href="/generate-report/${r.id}" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold border border-slate-700 transition-all inline-flex items-center gap-1">
+                            <i class="fa-solid fa-file-pdf text-rose-400"></i> PDF
+                        </a>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterHistory() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.getElementById('filterStatus').value;
+
+            const filtered = allHistoryRecords.filter(r => {
+                const matchQuery = (r.report_id || '').toLowerCase().includes(query) || (r.filename || '').toLowerCase().includes(query);
+                const matchStatus = status === 'ALL' || r.verdict === status;
+                return matchQuery && matchStatus;
+            });
+
+            renderHistoryTable(filtered);
+        }
+
+        let currentAnalytics = null;
+
+        function updateChartTheme(isDark) {
+            const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
+            const tickColor = isDark ? '#94a3b8' : '#64748b';
+            const legendColor = isDark ? '#cbd5e1' : '#334155';
+
+            if (trendChart && trendChart.options && trendChart.options.scales) {
+                trendChart.options.scales.x.grid.color = gridColor;
+                trendChart.options.scales.x.ticks.color = tickColor;
+                trendChart.options.scales.y.grid.color = gridColor;
+                trendChart.options.scales.y.ticks.color = tickColor;
+                trendChart.update();
+            }
+            if (distChart && distChart.options && distChart.options.plugins && distChart.options.plugins.legend) {
+                distChart.options.plugins.legend.labels.color = legendColor;
+                distChart.update();
+            }
+        }
+
+        function applyTheme(isDark) {
+            const icon = document.getElementById('themeToggleIcon');
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('docushield_theme', 'dark');
+                if (icon) {
+                    icon.className = 'fa-solid fa-moon text-sm';
+                }
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('docushield_theme', 'light');
+                if (icon) {
+                    icon.className = 'fa-solid fa-sun text-sm text-amber-500';
+                }
+            }
+            updateChartTheme(isDark);
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.contains('dark');
+            applyTheme(!isDark);
+        }
+
+        // Initialize saved theme on page load
+        (function initTheme() {
+            const savedTheme = localStorage.getItem('docushield_theme');
+            if (savedTheme === 'light') {
+                applyTheme(false);
+            } else {
+                applyTheme(true);
+            }
+        })();
+
+        // Render Chart.js Analytics
+        function renderCharts(ana) {
+            currentAnalytics = ana;
+            const trends = ana.daily_trends || {};
+            const labels = Object.keys(trends);
+            const dataCounts = Object.values(trends);
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
+            const tickColor = isDark ? '#94a3b8' : '#64748b';
+            const legendColor = isDark ? '#cbd5e1' : '#334155';
+
+            // 1. Line Chart
+            const ctxTrends = document.getElementById('chartTrends').getContext('2d');
+            if (trendChart) trendChart.destroy();
+
+            trendChart = new Chart(ctxTrends, {
+                type: 'line',
+                data: {
+                    labels: labels.length ? labels : ['Today'],
+                    datasets: [{
+                        label: 'Documents Verified',
+                        data: dataCounts.length ? dataCounts : [ana.total_documents],
+                        borderColor: '#a855f7',
+                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: gridColor }, ticks: { color: tickColor } },
+                        y: { grid: { color: gridColor }, ticks: { color: tickColor, stepSize: 1 } }
+                    }
+                }
+            });
+
+            // 2. Doughnut Chart
+            const ctxDist = document.getElementById('chartDistribution').getContext('2d');
+            if (distChart) distChart.destroy();
+
+            distChart = new Chart(ctxDist, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Genuine', 'Suspicious', 'Forged'],
+                    datasets: [{
+                        data: [ana.genuine_count, ana.suspicious_count, ana.forged_count],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: legendColor, font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

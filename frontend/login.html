@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In — DocuShield</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #05060f;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            color: #f1f5f9;
+        }
+
+        /* Animated Glow Spheres */
+        .sphere {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(70px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .s1 { top: -15%; left: -10%; width: 600px; height: 600px; background: radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 65%); animation: pulse1 9s ease-in-out infinite alternate; }
+        .s2 { bottom: -15%; right: -10%; width: 550px; height: 550px; background: radial-gradient(circle, rgba(56,189,248,0.2) 0%, transparent 65%); animation: pulse2 11s ease-in-out infinite alternate; }
+        .s3 { top: 40%; left: 45%; width: 350px; height: 350px; background: radial-gradient(circle, rgba(236,72,153,0.14) 0%, transparent 65%); animation: pulse3 7s ease-in-out infinite alternate; }
+
+        @keyframes pulse1 { from { transform: scale(1) translate(0,0); } to { transform: scale(1.1) translate(40px, 30px); } }
+        @keyframes pulse2 { from { transform: scale(1) translate(0,0); } to { transform: scale(1.08) translate(-30px, -40px); } }
+        @keyframes pulse3 { from { transform: scale(1); } to { transform: scale(1.15); } }
+
+        /* Grid Overlay */
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        /* Page Wrapper */
+        .page-wrap {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            width: 100%;
+            max-width: 980px;
+            margin: 24px;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 50px 120px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.07);
+        }
+
+        /* ── Left Brand Panel ── */
+        .brand-panel {
+            width: 400px;
+            flex-shrink: 0;
+            background: linear-gradient(145deg, #150a2e 0%, #0a1628 55%, #030d1f 100%);
+            padding: 48px 44px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .brand-panel-glow1 {
+            position: absolute;
+            top: -80px; right: -80px;
+            width: 280px; height: 280px;
+            background: radial-gradient(circle, rgba(168,85,247,0.35) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .brand-panel-glow2 {
+            position: absolute;
+            bottom: -60px; left: -60px;
+            width: 240px; height: 240px;
+            background: radial-gradient(circle, rgba(56,189,248,0.25) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo-box {
+            width: 50px; height: 50px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #7c3aed, #a855f7, #ec4899);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; color: white;
+            box-shadow: 0 8px 30px rgba(168,85,247,0.5);
+        }
+
+        .brand-name-text { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; }
+        .brand-name-text span { color: #a855f7; }
+        .brand-tagline { font-size: 9.5px; color: #64748b; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; margin-top: 1px; }
+
+        .brand-hero { position: relative; z-index: 2; }
+        .brand-headline {
+            font-size: 30px; font-weight: 900;
+            line-height: 1.18; letter-spacing: -1px;
+            margin-bottom: 14px;
+        }
+        .grad-text {
+            background: linear-gradient(135deg, #38bdf8 0%, #a855f7 50%, #ec4899 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .brand-desc { font-size: 12.5px; color: rgba(255,255,255,0.42); line-height: 1.75; }
+
+        .feature-list { display: flex; flex-direction: column; gap: 11px; position: relative; z-index: 2; }
+        .feat-item { display: flex; align-items: center; gap: 12px; font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 500; }
+        .feat-dot {
+            width: 32px; height: 32px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; flex-shrink: 0;
+        }
+
+        /* ── Right Form Panel ── */
+        .form-panel {
+            flex: 1;
+            background: rgba(8, 9, 22, 0.96);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            padding: 52px 48px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-left: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .form-eyebrow {
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 2.5px; text-transform: uppercase;
+            color: #a855f7;
+            display: flex; align-items: center; gap-8px;
+            margin-bottom: 10px;
+        }
+
+        .form-title { font-size: 28px; font-weight: 900; letter-spacing: -0.6px; margin-bottom: 6px; }
+        .form-sub { font-size: 13px; color: #64748b; font-weight: 400; margin-bottom: 32px; }
+
+        /* Error alert */
+        .err-box {
+            display: none;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 13px 16px;
+            border-radius: 13px;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.2);
+            color: #fca5a5;
+            font-size: 12.5px;
+            font-weight: 500;
+            margin-bottom: 22px;
+        }
+        .err-box.show { display: flex; }
+
+        /* Form group */
+        .fgroup { margin-bottom: 18px; }
+        .flabel {
+            display: block;
+            font-size: 11px; font-weight: 700;
+            color: rgba(255,255,255,0.55);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .iw { position: relative; }
+        .iico {
+            position: absolute; left: 15px; top: 50%;
+            transform: translateY(-50%);
+            color: #475569; font-size: 13px;
+            transition: color 0.25s;
+            pointer-events: none;
+        }
+        .finput {
+            width: 100%;
+            background: rgba(255,255,255,0.03);
+            border: 1.5px solid rgba(255,255,255,0.08);
+            border-radius: 13px;
+            padding: 13px 16px 13px 44px;
+            font-size: 13.5px; color: #f1f5f9;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 500;
+            outline: none;
+            transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+        }
+        .finput::placeholder { color: rgba(255,255,255,0.15); font-weight: 400; }
+        .finput:focus {
+            border-color: #a855f7;
+            background: rgba(168,85,247,0.06);
+            box-shadow: 0 0 0 4px rgba(168,85,247,0.1);
+        }
+        .iw:focus-within .iico { color: #a855f7; }
+
+        /* Submit button */
+        .btn-main {
+            width: 100%; padding: 14.5px;
+            border-radius: 13px; border: none;
+            background: linear-gradient(135deg, #6d28d9 0%, #a855f7 60%, #c026d3 100%);
+            color: white;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 14px; font-weight: 800;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 9px;
+            box-shadow: 0 10px 35px rgba(168,85,247,0.45);
+            transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+            letter-spacing: 0.2px;
+            margin-top: 6px;
+        }
+        .btn-main:hover { opacity: 0.92; transform: translateY(-2px); box-shadow: 0 14px 40px rgba(168,85,247,0.55); }
+        .btn-main:active { transform: translateY(0); }
+        .btn-main:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 26px;
+            font-size: 13px;
+            color: #475569;
+        }
+        .form-footer a { color: #a855f7; font-weight: 700; text-decoration: none; transition: color 0.2s; }
+        .form-footer a:hover { color: #c084fc; text-decoration: underline; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { animation: spin 0.75s linear infinite; display: inline-block; }
+
+        @media (max-width: 720px) {
+            .brand-panel { display: none; }
+            .page-wrap { max-width: 460px; border-radius: 22px; }
+            .form-panel { padding: 40px 28px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sphere s1"></div>
+    <div class="sphere s2"></div>
+    <div class="sphere s3"></div>
+    <div class="grid-overlay"></div>
+
+    <div class="page-wrap">
+
+        <!-- Left Brand Panel -->
+        <div class="brand-panel">
+            <div class="brand-panel-glow1"></div>
+            <div class="brand-panel-glow2"></div>
+
+            <div class="brand-logo">
+                <div class="logo-box"><i class="fa-solid fa-shield-halved"></i></div>
+                <div>
+                    <div class="brand-name-text">Docu<span>Shield</span></div>
+                    <div class="brand-tagline">Forensic Verification</div>
+                </div>
+            </div>
+
+            <div class="brand-hero">
+                <h2 class="brand-headline">Detect Forgery<br>with <span class="grad-text">AI Precision</span></h2>
+                <p class="brand-desc">Analyse documents using Error Level Analysis, Computer Vision & LLM-powered audit in seconds.</p>
+            </div>
+
+            <div class="feature-list">
+                <div class="feat-item">
+                    <div class="feat-dot" style="background:rgba(168,85,247,0.15);color:#a855f7;"><i class="fa-solid fa-eye"></i></div>
+                    <span>ELA Compression Heatmaps</span>
+                </div>
+                <div class="feat-item">
+                    <div class="feat-dot" style="background:rgba(56,189,248,0.15);color:#38bdf8;"><i class="fa-solid fa-brain"></i></div>
+                    <span>Groq Llama 3.3 AI Audit</span>
+                </div>
+                <div class="feat-item">
+                    <div class="feat-dot" style="background:rgba(16,185,129,0.15);color:#10b981;"><i class="fa-solid fa-chart-pie"></i></div>
+                    <span>100-Point Authenticity Score</span>
+                </div>
+                <div class="feat-item">
+                    <div class="feat-dot" style="background:rgba(251,146,60,0.15);color:#fb923c;"><i class="fa-solid fa-file-pdf"></i></div>
+                    <span>Downloadable PDF Reports</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Form Panel -->
+        <div class="form-panel">
+            <div class="form-eyebrow">
+                <span style="display:inline-block;width:20px;height:2px;background:#a855f7;margin-right:8px;border-radius:2px;vertical-align:middle;"></span>
+                Verification Console
+            </div>
+            <h1 class="form-title">Welcome back 👋</h1>
+            <p class="form-sub">Sign in to continue to your forensic dashboard</p>
+
+            <div class="err-box" id="errBox">
+                <i class="fa-solid fa-circle-exclamation" style="flex-shrink:0;margin-top:1px;"></i>
+                <span id="errText">Something went wrong.</span>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
+                <div class="fgroup">
+                    <label class="flabel" for="email">Email Address</label>
+                    <div class="iw">
+                        <input type="email" id="email" class="finput" placeholder="you@company.com" required autocomplete="email">
+                        <i class="fa-solid fa-envelope iico"></i>
+                    </div>
+                </div>
+                <div class="fgroup">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
+                        <label class="flabel" for="password" style="margin-bottom:0;">Password</label>
+                        <a href="#" onclick="handleForgotPassword(event)" style="font-size:12px;color:#a855f7;text-decoration:none;">Forgot password?</a>
+                    </div>
+                    <div class="iw">
+                        <input type="password" id="password" class="finput" placeholder="••••••••••" required autocomplete="current-password">
+                        <i class="fa-solid fa-lock iico"></i>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-main" id="btnSubmit">
+                    <span id="btnLabel">Sign In to Console</span>
+                    <i class="fa-solid fa-arrow-right" id="btnIco"></i>
+                </button>
+            </form>
+
+            <p class="form-footer">Don't have an account? <a href="signup.html">Create account →</a></p>
+        </div>
+    </div>
+
+    <script>
+        let auth;
+        async function initFirebase() {
+            try {
+                const res = await fetch('/firebase-config');
+                const cfg = await res.json();
+                if (!firebase.apps.length) firebase.initializeApp(cfg);
+            } catch(e) { console.error(e); }
+            auth = firebase.auth();
+        }
+        initFirebase();
+
+        function showErr(msg) {
+            document.getElementById('errText').textContent = msg;
+            document.getElementById('errBox').classList.add('show');
+        }
+
+        async function handleForgotPassword(e) {
+            if (e) e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            if (!email) {
+                showErr('Please enter your email address first, then click "Forgot password?".');
+                return;
+            }
+            try {
+                await auth.sendPasswordResetEmail(email);
+                alert('A password reset link has been sent to ' + email + '. Please check your inbox.');
+            } catch(err) {
+                showErr(err.message || 'Unable to send password reset email.');
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            document.getElementById('errBox').classList.remove('show');
+            const email = document.getElementById('email').value.trim();
+            const pwd = document.getElementById('password').value;
+            const btn = document.getElementById('btnSubmit');
+            const lbl = document.getElementById('btnLabel');
+            const ico = document.getElementById('btnIco');
+
+            btn.disabled = true;
+            lbl.textContent = 'Signing in...';
+            ico.className = 'fa-solid fa-circle-notch spin';
+
+            try {
+                const cred = await auth.signInWithEmailAndPassword(email, pwd);
+                const res = await fetch('/signin', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ uid: cred.user.uid, email })
+                });
+                if (res.ok) { lbl.textContent = 'Redirecting...'; ico.className = 'fa-solid fa-check'; window.location.href = 'dashboard.html'; }
+                else { const d = await res.json(); throw new Error(d.message); }
+            } catch(err) {
+                const code = err.code || '';
+                const isCredentialErr = code.includes('invalid-credential') || 
+                                       code.includes('invalid-login-credentials') || 
+                                       code.includes('wrong-password') || 
+                                       code.includes('user-not-found');
+
+                const msg = isCredentialErr 
+                    ? 'Incorrect email or password, or account does not exist. Please check your credentials or click "Create account" below.'
+                    : code.includes('too-many-requests') 
+                    ? 'Too many failed attempts. Please wait a few moments and try again.'
+                    : err.message || 'Sign in failed.';
+
+                showErr(msg);
+                btn.disabled = false;
+                lbl.textContent = 'Sign In to Console';
+                ico.className = 'fa-solid fa-arrow-right';
+            }
+        }
+    </script>
+</body>
+</html>
